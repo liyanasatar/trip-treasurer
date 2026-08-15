@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<base target="_top">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<style>
+  :root{
+    --bg:#f4f1ec; --card:#ffffff; --ink:#262220; --muted:#857c73;
+    --line:#e6e0d7; --accent:#9a6a4f; --accent-soft:#f0e6dd;
+    --green:#3f8f5b; --green-soft:#e4f1e8;
+    --amber:#c98a14; --amber-soft:#fbf0d8;
+    --red:#bf5340; --red-soft:#f8e4df;
+    --blue:#6f96c4; --orange:#d98a52; --leaf:#7fa56a;
+    --radius:14px; --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg); color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; font-size:16px; line-height:1.45; padding:0 0 90px;}
+  .wrap{max-width:680px; margin:0 auto; padding:16px;}
+  h1{font-size:20px; margin:6px 0 2px;}
+  .sub{color:var(--muted); font-size:13px; margin:0 0 14px;}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px; margin-bottom:16px;}
+  .card h2{font-size:15px; margin:0 0 12px; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); font-weight:600;}
+
+  .deadline-banner{display:flex; align-items:center; gap:12px; border-radius:var(--radius); padding:14px 16px; margin-bottom:16px; box-shadow:var(--shadow);}
+  .deadline-banner.ok{background:var(--green-soft); border:1px solid var(--green);}
+  .deadline-banner.warn{background:var(--amber-soft); border:1px solid var(--amber);}
+  .deadline-banner.late{background:var(--red-soft); border:1px solid var(--red);}
+  .deadline-banner .big{font-size:26px; font-weight:800; line-height:1; min-width:48px; text-align:center;}
+  .deadline-banner.ok .big{color:var(--green);} .deadline-banner.warn .big{color:var(--amber);} .deadline-banner.late .big{color:var(--red);}
+  .deadline-banner .dtxt{font-size:13px;} .deadline-banner .dtxt b{display:block; font-size:14px;}
+
+  .qr-card{text-align:center;}
+  .qr-card img{width:230px; max-width:74%; height:auto; border-radius:12px; border:1px solid var(--line);}
+  .qr-card .pn{font-weight:700; margin-top:10px; font-size:15px;}
+  .qr-card .acc{font-size:20px; font-weight:700; letter-spacing:1px; color:var(--accent); margin:4px 0;}
+  .qr-card .bank{font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px;}
+  .copybtn{margin-top:10px; padding:9px 16px; border:1px solid var(--accent); background:var(--card); color:var(--accent); border-radius:99px; font-size:13px; font-weight:600;}
+
+  .totals{display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
+  .stat{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:12px; text-align:center; box-shadow:var(--shadow);}
+  .stat .num{font-size:18px; font-weight:700; line-height:1.1;}
+  .stat .lbl{font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; margin-top:4px;}
+  .stat.collected .num{color:var(--green);} .stat.outstanding .num{color:var(--red);}
+  .progress{height:8px; background:var(--accent-soft); border-radius:99px; overflow:hidden; margin-top:12px;}
+  .progress > div{height:100%; background:var(--green); width:0%; transition:width .4s ease;}
+  .countline{font-size:12px; color:var(--muted); margin-top:8px; text-align:center;}
+
+  .group-h{display:flex; align-items:center; gap:8px; margin:18px 2px 8px; font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:var(--muted);}
+  .dot{width:10px; height:10px; border-radius:99px; flex:none;}
+  .group-h .gtot{margin-left:auto; font-weight:600; color:var(--ink); text-transform:none; letter-spacing:0;}
+
+  .person{background:var(--card); border:1px solid var(--line); border-radius:12px; margin-bottom:8px; display:flex; align-items:center; gap:10px; padding:12px 14px;}
+  .pill{font-size:11px; font-weight:700; padding:3px 9px; border-radius:99px; white-space:nowrap;}
+  .pill.paid{background:var(--green-soft); color:var(--green);}
+  .pill.partial{background:var(--amber-soft); color:var(--amber);}
+  .pill.unpaid{background:var(--red-soft); color:var(--red);}
+  .pname{flex:1; font-weight:600;}
+  .pname .kids{font-weight:400; color:var(--muted); font-size:12px; display:block;}
+  .pname .by{font-weight:400; color:var(--muted); font-size:12px; display:block;}
+  .pamt{font-size:13px; color:var(--muted); text-align:right; white-space:nowrap;}
+  .pamt b{color:var(--ink); display:block; font-size:14px;}
+  .paylink{border:none; background:var(--accent); color:#fff; border-radius:99px; padding:8px 14px; font-size:13px; font-weight:600;}
+  .person.paid-row .paylink{background:var(--card); color:var(--accent); border:1px solid var(--accent);}
+
+  .addbtn{margin-top:8px; width:100%; padding:11px; border:1px dashed var(--accent); border-radius:12px; background:none; color:var(--accent); font-weight:600; font-size:14px;}
+  .btn{display:block; width:100%; padding:13px; border-radius:12px; border:none; background:var(--accent); color:#fff; font-size:15px; font-weight:600; margin-top:10px;}
+  .btn.ghost{background:var(--card); border:1px solid var(--line); color:var(--ink);}
+  .btn:disabled{opacity:.5;}
+  .note{font-size:12px; color:var(--muted); margin-top:8px; line-height:1.5;}
+  .deadline{background:var(--amber-soft); color:var(--amber); border-radius:10px; padding:10px 12px; font-size:13px; font-weight:600; margin-bottom:12px;}
+  .empty{font-size:13px; color:var(--muted); text-align:center; padding:18px 0;}
+
+  /* day guests / extras */
+  .dt-person{background:var(--card); border:1px solid var(--line); border-radius:12px; margin-bottom:8px; padding:12px 14px;}
+  .dt-top{display:flex; align-items:center; gap:8px; margin-bottom:8px;}
+  .dt-top .pname{flex:1;}
+  .meals{display:grid; grid-template-columns:repeat(2,1fr); gap:8px;}
+  .meal{display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid var(--line); border-radius:10px; font-size:14px;}
+  .meal input{width:18px; height:18px; accent-color:var(--accent);}
+  .meal .mp{margin-left:auto; color:var(--muted); font-size:12px;}
+  .dt-foot{display:flex; align-items:center; gap:10px; margin-top:10px;}
+  .dt-foot .tot{font-weight:700; color:var(--accent); margin-left:auto;}
+  .dt-foot input{width:90px; padding:8px; border:1px solid var(--line); border-radius:8px;}
+
+  /* modal */
+  .overlay{position:fixed; inset:0; background:rgba(38,34,32,.45); display:none; align-items:flex-end; justify-content:center; z-index:50;}
+  .overlay.show{display:flex;}
+  .sheet{background:var(--bg); width:100%; max-width:680px; max-height:90vh; overflow-y:auto; border-radius:18px 18px 0 0; padding:18px 16px 28px;}
+  .sheet h3{margin:4px 0 14px; font-size:18px;}
+  .fld{margin-bottom:14px;}
+  .fld label{display:block; font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px;}
+  .fld input, .fld select{width:100%; padding:12px; border:1px solid var(--line); border-radius:10px; font-size:16px; background:var(--card); color:var(--ink);}
+  .cover-list{border:1px solid var(--line); border-radius:12px; background:var(--card); max-height:230px; overflow-y:auto;}
+  .cover-h{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); padding:8px 12px 2px;}
+  .cover-item{display:flex; align-items:center; gap:10px; padding:9px 12px; border-top:1px solid var(--line);}
+  .cover-item input{width:20px; height:20px; accent-color:var(--accent);}
+  .cover-item .cn{flex:1; font-size:14px;}
+  .cover-item .cr{font-size:12px; color:var(--muted);}
+  .cover-item.done .cn{color:var(--muted);}
+  .amt-row{display:flex; gap:8px; align-items:stretch;}
+  .amt-row input{flex:1;}
+  .amt-row button{white-space:nowrap; border:1px solid var(--accent); background:var(--accent-soft); color:var(--accent); border-radius:10px; padding:0 14px; font-weight:600; font-size:13px;}
+  .selsum{font-size:13px; color:var(--ink); margin:6px 2px 0;}
+  .modal-actions{display:flex; gap:10px; margin-top:8px;}
+  .modal-actions .btn{margin-top:0;}
+
+  .toast{position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(120px); background:var(--ink); color:#fff; padding:12px 20px; border-radius:99px; font-size:14px; transition:transform .3s; z-index:99; box-shadow:0 4px 16px rgba(0,0,0,.2); text-align:center; max-width:90%;}
+  .toast.show{transform:translateX(-50%) translateY(0);}
+  .loading{text-align:center; color:var(--muted); padding:60px 0; font-size:15px;}
+  .spinner{width:28px;height:28px;border:3px solid var(--accent-soft);border-top-color:var(--accent);border-radius:50%;margin:0 auto 12px;animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .treasurer-actions{display:none; gap:14px; margin-top:8px; flex-wrap:wrap;}
+  .treasurer-actions.show{display:flex;}
+  .linkbtn{background:none; border:none; color:var(--accent); font-size:13px; padding:6px 0; font-weight:600;}
+  .delbtn{color:var(--red);}
+  .saving{position:fixed; top:0; left:0; right:0; height:3px; background:var(--accent); transform:scaleX(0); transform-origin:left; transition:transform .3s; z-index:100;}
+  .saving.on{transform:scaleX(.7); animation:load 1.2s ease-in-out infinite;}
+  @keyframes load{0%{transform:scaleX(.1);}50%{transform:scaleX(.7);}100%{transform:scaleX(.95);}}
+</style>
+</head>
+<body>
+<div class="saving" id="saving"></div>
+<div class="wrap" id="app">
+  <div class="loading"><div class="spinner"></div>Loading the tracker...</div>
+</div>
+
+<div class="overlay" id="overlay"><div class="sheet" id="sheet"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+  var S = null;          // server state
+  var PIN = null;        // treasurer pin held in memory after unlock
+
+  function money(n){ var sym = S.config.currency; n = Math.round((n||0)*100)/100; var s=(n%1===0)?n.toString():n.toFixed(2); return sym+s.replace(/\B(?=(\d{3})+(?!\d))/g,','); }
+  function esc(s){ return (s||'').replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  function fmtDate(iso){
+    var d = new Date(iso+'T00:00:00');
+    var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return d.getDate()+' '+months[d.getMonth()]+' '+d.getFullYear();
+  }
+  function statusOf(p){ if(p.owed>0 && p.paid>=p.owed) return 'paid'; if(p.paid>0) return 'partial'; return 'unpaid'; }
+  function remaining(p){ return Math.max(0, p.owed - p.paid); }
+  function byId(id){ return S.people.filter(function(p){return p.id===id;})[0]; }
+  function groupOf(key){ return S.groups.filter(function(g){return g.key===key;})[0]; }
+  function groupOptions(sel){ return S.groups.map(function(g){ return '<option value="'+esc(g.key)+'"'+(g.key===sel?' selected':'')+'>'+esc(g.label)+'</option>'; }).join(''); }
+
+  // ---- server helpers ----
+  function saving(on){ document.getElementById('saving').classList.toggle('on', !!on); }
+  function call(fn, arg, after){
+    saving(true);
+    google.script.run
+      .withSuccessHandler(function(st){ saving(false); S = st; render(); if(after) after(st); })
+      .withFailureHandler(function(err){ saving(false); toast(String(err.message||err)); })
+      [fn](arg);
+  }
+
+  google.script.run.withSuccessHandler(function(st){ S=st; render(); }).withFailureHandler(function(e){ document.getElementById('app').innerHTML='<div class="loading">Could not load. Pull to refresh.<br><br>'+esc(String(e.message||e))+'</div>'; }).getState();
+
+  // ---- render ----
+  function render(){
+    var c = S.config;
+    var deadline = new Date(c.deadlineDate+'T00:00:00');
+    var coming = S.people;
+    var expected = coming.reduce(function(a,p){return a+p.owed;},0);
+    var collected = coming.reduce(function(a,p){return a+p.paid;},0);
+    var outstanding = Math.max(0, expected-collected);
+    var pct = expected>0 ? Math.min(100, Math.round(collected/expected*100)) : 0;
+    var nPaid=0,nPart=0,nUnp=0;
+    coming.forEach(function(p){ var s=statusOf(p); if(s==='paid')nPaid++; else if(s==='partial')nPart++; else nUnp++; });
+
+    var now=new Date(); now.setHours(0,0,0,0);
+    var days = Math.round((deadline-now)/86400000);
+    var dlCls = days>14?'ok':(days>=0?'warn':'late');
+    var dlBig = days>0?days:(days===0?'!':Math.abs(days));
+    var dlTitle = days>1?(days+' days left to pay'):(days===1?'1 day left to pay':(days===0?'Deadline is today':Math.abs(days)+' days overdue'));
+
+    var h = '';
+    h += '<h1>'+esc(c.eventName)+' Payments</h1>';
+    h += '<p class="sub">'+esc(c.eventDates)+'. '+money(c.perPerson)+' per person. Find your name, tap Pay, and log what you sent. You can pay in parts.</p>';
+
+    h += '<div class="deadline-banner '+dlCls+'"><div class="big">'+dlBig+'</div><div class="dtxt"><b>'+dlTitle+'</b>Please pay by '+fmtDate(c.deadlineDate)+'</div></div>';
+
+    // account details, QR is optional
+    h += '<div class="card qr-card">';
+    if(c.qrImageUrl){ h += '<img src="'+esc(c.qrImageUrl)+'" alt="Payment QR code">'; }
+    h += '<div class="pn">'+esc(c.payName)+'</div>';
+    h += '<div class="acc" id="accNo">'+esc(c.account)+'</div>';
+    h += '<div class="bank">'+esc(c.bank)+' &middot; '+(c.qrImageUrl?'scan the QR or transfer to this account':'transfer to this account')+'</div>';
+    h += '<button class="copybtn" onclick="copyAcc()">Copy account number</button>';
+    h += '</div>';
+
+    // totals
+    h += '<div class="totals">';
+    h += '<div class="stat"><div class="num">'+money(expected)+'</div><div class="lbl">Expected</div></div>';
+    h += '<div class="stat collected"><div class="num">'+money(collected)+'</div><div class="lbl">Collected</div></div>';
+    h += '<div class="stat outstanding"><div class="num">'+money(outstanding)+'</div><div class="lbl">Outstanding</div></div>';
+    h += '</div>';
+    h += '<div class="card" style="margin-top:10px;"><div class="progress"><div style="width:'+pct+'%"></div></div>';
+    h += '<div class="countline">'+nPaid+' paid, '+nPart+' partial, '+nUnp+' not yet, of '+coming.length+' people</div></div>';
+
+    // people by group
+    S.groups.forEach(function(go){
+      var mem = S.people.filter(function(p){return p.group===go.key;});
+      if(!mem.length) return;
+      var ge = mem.reduce(function(a,p){return a+p.owed;},0);
+      var gp = mem.reduce(function(a,p){return a+p.paid;},0);
+      h += '<div class="group-h"><span class="dot" style="background:'+go.color+'"></span>'+esc(go.label)+'<span class="gtot">'+money(gp)+' / '+money(ge)+'</span></div>';
+      mem.forEach(function(p){ h += personRow(p); });
+    });
+    if(!coming.length){ h += '<div class="empty">No one added yet. Unlock treasurer mode below, then add people.</div>'; }
+
+    h += '<button class="addbtn" id="addPersonBtn">+ Add a person</button>';
+
+    // day guests / extras
+    h += '<div class="card" style="margin-top:16px;"><h2>'+esc(c.extrasLabel)+'</h2>';
+    h += '<div class="deadline">Confirm before '+fmtDate(c.extrasDeadlineDate)+'.</div>';
+    h += '<p class="note" style="margin-top:0;">For people joining part of the time, not staying the whole trip. Tick what applies, then log payment. Breakfast '+money(S.extraPrices.breakfast)+', Lunch '+money(S.extraPrices.lunch)+', Dinner '+money(S.extraPrices.dinner)+', Facilities '+money(S.extraPrices.facilities)+'.</p>';
+    var exExp=0,exCol=0;
+    S.extras.forEach(function(d){ exExp+=exTotal(d); exCol+=d.paid; });
+    h += '<div class="totals" style="margin-bottom:12px;"><div class="stat"><div class="num">'+money(exExp)+'</div><div class="lbl">Expected</div></div><div class="stat collected"><div class="num">'+money(exCol)+'</div><div class="lbl">Collected</div></div><div class="stat outstanding"><div class="num">'+money(Math.max(0,exExp-exCol))+'</div><div class="lbl">Outstanding</div></div></div>';
+    h += '<div id="extrasList">';
+    S.extras.forEach(function(d){ h += extrasRow(d); });
+    h += '</div><button class="addbtn" id="addExtrasBtn">+ Add a person</button></div>';
+
+    // treasurer
+    h += '<div class="card"><h2>Treasurer tools</h2>';
+    h += '<button class="btn ghost" onclick="copySummary()">Copy status summary for your group chat</button>';
+    h += '<button class="btn ghost" id="unlockBtn" onclick="unlock()">'+(PIN?'Treasurer mode is ON':'Unlock treasurer mode')+'</button>';
+    h += '<div class="treasurer-actions'+(PIN?' show':'')+'" id="trActions"><span class="note" style="margin:0;">Tap a name in the list to edit or correct it. Add/remove people with the buttons above.</span></div>';
+    h += '<p class="note">Everyone shares this one link. Every change saves to your Google Sheet instantly.</p></div>';
+
+    document.getElementById('app').innerHTML = h;
+
+    // wire buttons
+    document.getElementById('addPersonBtn').onclick = function(){ if(!requirePin()) return; openAddPerson(); };
+    document.getElementById('addExtrasBtn').onclick = openAddExtras;
+    bindPeople();
+    bindExtras();
+  }
+
+  function personRow(p){
+    var st = statusOf(p);
+    var extra = p.freeGuests>0 ? '<span class="kids">+ '+p.freeGuests+' free</span>' : '';
+    var by = p.lastBy ? '<span class="by">last paid by '+esc(p.lastBy)+'</span>' : '';
+    var amt = st==='paid' ? '<b>Paid</b>'+money(p.paid) :
+              (st==='partial' ? '<b>'+money(remaining(p))+' left</b>'+money(p.paid)+' of '+money(p.owed) :
+               '<b>'+money(p.owed)+'</b>due');
+    return '<div class="person '+(st==='paid'?'paid-row':'')+'" data-id="'+p.id+'">'+
+      '<span class="pill '+st+'">'+(st==='paid'?'Paid':st==='partial'?'Part':'Owing')+'</span>'+
+      '<span class="pname">'+esc(p.name)+extra+by+'</span>'+
+      '<span class="pamt">'+amt+'</span>'+
+      '<button class="paylink" data-act="pay">'+(st==='paid'?'Edit':'Pay')+'</button>'+
+      '</div>';
+  }
+
+  function bindPeople(){
+    document.querySelectorAll('.person[data-id]').forEach(function(row){
+      var id = row.dataset.id;
+      row.querySelector('[data-act="pay"]').onclick = function(e){ e.stopPropagation(); openPay(id); };
+      // tap the name area: treasurer edit if unlocked, else open pay
+      row.querySelector('.pname').onclick = function(){ if(PIN) openEditPerson(id); else openPay(id); };
+    });
+  }
+
+  // ---- payment modal ----
+  function openPay(focusId){
+    var p = byId(focusId);
+    var selected = {}; selected[focusId] = true;
+    var payerDefault = p ? p.name : '';
+    drawPay(selected, payerDefault, '');
+  }
+  function drawPay(selected, payer, amount){
+    var h = '<h3>Record a payment</h3>';
+    h += '<div class="fld"><label>Who is paying (your name)</label><input id="pPayer" value="'+esc(payer)+'" placeholder="Your name"></div>';
+    h += '<div class="fld"><label>Paying for (tick everyone this covers)</label><div class="cover-list" id="coverList">';
+    S.groups.forEach(function(go){
+      var mem = S.people.filter(function(x){return x.group===go.key;});
+      if(!mem.length) return;
+      h += '<div class="cover-h">'+esc(go.label)+'</div>';
+      mem.forEach(function(x){
+        var rem = remaining(x);
+        var done = rem<=0;
+        h += '<label class="cover-item'+(done?' done':'')+'"><input type="checkbox" data-cid="'+x.id+'" '+(selected[x.id]?'checked':'')+'>'+
+             '<span class="cn">'+esc(x.name)+'</span>'+
+             '<span class="cr">'+(done?'fully paid':money(rem)+' left')+'</span></label>';
+      });
+    });
+    h += '</div><div class="selsum" id="selSum"></div></div>';
+    h += '<div class="fld"><label>Amount paying now</label><div class="amt-row"><input id="pAmt" type="number" inputmode="decimal" value="'+(amount||'')+'" placeholder="0"><button id="fillBtn" type="button">Pay selected in full</button></div></div>';
+    h += '<div class="deadline" style="background:var(--accent-soft);color:var(--accent);">After you transfer, please post your receipt in your group chat so it can be matched up. Thank you.</div>';
+    h += '<div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn" id="confirmPay">Confirm payment</button></div>';
+    openModal(h);
+
+    function selRemain(){
+      var sum=0; document.querySelectorAll('#coverList input:checked').forEach(function(cb){ var x=byId(cb.dataset.cid); if(x) sum+=remaining(x); });
+      return sum;
+    }
+    function refreshSum(){ document.getElementById('selSum').textContent = 'Selected remaining: '+money(selRemain()); }
+    refreshSum();
+    document.querySelectorAll('#coverList input').forEach(function(cb){ cb.onchange = refreshSum; });
+    document.getElementById('fillBtn').onclick = function(){ document.getElementById('pAmt').value = selRemain(); };
+    document.getElementById('confirmPay').onclick = function(){
+      var payer = document.getElementById('pPayer').value.trim();
+      var amt = Math.max(0, parseFloat(document.getElementById('pAmt').value)||0);
+      var ids = []; document.querySelectorAll('#coverList input:checked').forEach(function(cb){ ids.push(cb.dataset.cid); });
+      if(!ids.length){ toast('Tick at least one name'); return; }
+      if(amt<=0){ toast('Enter the amount you paid'); return; }
+      closeModal();
+      call('recordPayment', {payer:payer, amount:amt, coveredIds:ids}, function(){ toast('Recorded, thank you. Please post your receipt in the chat.'); });
+    };
+  }
+
+  // ---- treasurer: edit / add ----
+  function openEditPerson(id){
+    var p = byId(id); if(!p) return;
+    var h = '<h3>Edit '+esc(p.name)+'</h3>';
+    h += '<div class="fld"><label>Name</label><input id="eName" value="'+esc(p.name)+'"></div>';
+    h += '<div class="fld"><label>Group</label><select id="eGroup">'+groupOptions(p.group)+'</select></div>';
+    h += '<div class="fld"><label>Extra people, free (kids, etc.)</label><input id="eFree" type="number" value="'+p.freeGuests+'"></div>';
+    h += '<div class="fld"><label>Amount this person owes</label><input id="eOwed" type="number" value="'+p.owed+'"></div>';
+    h += '<div class="fld"><label>Amount paid so far, correct it if needed</label><input id="ePaid" type="number" value="'+p.paid+'"></div>';
+    h += '<div class="modal-actions"><button class="btn ghost delbtn" id="delBtn" style="border-color:var(--red);">Delete</button><button class="btn" id="saveEdit">Save</button></div>';
+    openModal(h);
+    document.getElementById('saveEdit').onclick = function(){
+      closeModal();
+      call('editPerson', {pin:PIN, id:id,
+        name:document.getElementById('eName').value.trim(),
+        group:document.getElementById('eGroup').value,
+        freeGuests:document.getElementById('eFree').value,
+        owed:document.getElementById('eOwed').value,
+        paid:document.getElementById('ePaid').value}, function(){ toast('Saved'); });
+    };
+    document.getElementById('delBtn').onclick = function(){
+      confirmBox('Delete '+p.name+'?', function(){ call('removePerson', {pin:PIN, id:id}, function(){ toast('Deleted'); }); });
+    };
+  }
+  function openAddPerson(){
+    var h = '<h3>Add a person</h3>';
+    h += '<div class="fld"><label>Name</label><input id="aName" placeholder="Full name"></div>';
+    h += '<div class="fld"><label>Group</label><select id="aGroup">'+groupOptions(S.groups[0]&&S.groups[0].key)+'</select></div>';
+    h += '<div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn" id="addOk">Add</button></div>';
+    openModal(h);
+    document.getElementById('addOk').onclick = function(){
+      var nm=document.getElementById('aName').value.trim(); if(!nm){ toast('Enter a name'); return; }
+      closeModal();
+      call('addPerson', {pin:PIN, name:nm, group:document.getElementById('aGroup').value}, function(){ toast('Added'); });
+    };
+  }
+
+  // ---- day guests / extras ----
+  function exTotal(d){ var t=0; ['breakfast','lunch','dinner','facilities'].forEach(function(k){ if(d[k]) t+=S.extraPrices[k]; }); return t; }
+  function exStatus(d){ var t=exTotal(d); if(t>0 && d.paid>=t) return 'paid'; if(d.paid>0) return 'partial'; return 'unpaid'; }
+  function extrasRow(d){
+    var t=exTotal(d), st=exStatus(d);
+    function mb(k,l){ return '<label class="meal"><input type="checkbox" data-ck="'+k+'" '+(d[k]?'checked':'')+'> '+l+'<span class="mp">'+money(S.extraPrices[k])+'</span></label>'; }
+    return '<div class="dt-person" data-exid="'+d.id+'">'+
+      '<div class="dt-top"><span class="pill '+st+'">'+(st==='paid'?'Paid':st==='partial'?'Part':'Owing')+'</span><span class="pname">'+esc(d.name)+'</span>'+
+      '<button class="linkbtn" data-eact="rename">Rename</button>'+(PIN?'<button class="linkbtn delbtn" data-eact="del">Delete</button>':'')+'</div>'+
+      '<div class="meals">'+mb('breakfast','Breakfast')+mb('lunch','Lunch')+mb('dinner','Dinner')+mb('facilities','Facilities')+'</div>'+
+      '<div class="dt-foot"><span style="color:var(--muted);font-size:13px;">Paid</span><input type="number" inputmode="decimal" data-eact="paid" value="'+(d.paid||'')+'" placeholder="0"><span class="tot">'+money(t)+' total</span></div>'+
+      '</div>';
+  }
+  function bindExtras(){
+    document.querySelectorAll('.dt-person[data-exid]').forEach(function(row){
+      var id=row.dataset.exid;
+      row.querySelectorAll('[data-ck]').forEach(function(cb){
+        cb.onchange=function(){
+          var d=S.extras.filter(function(x){return x.id===id;})[0];
+          var meals={breakfast:d.breakfast,lunch:d.lunch,dinner:d.dinner,facilities:d.facilities};
+          meals[cb.dataset.ck]=cb.checked;
+          call('saveExtras',{id:id, meals:meals});
+        };
+      });
+      var paidInput=row.querySelector('[data-eact="paid"]');
+      if(paidInput) paidInput.onchange=function(){ call('saveExtras',{id:id, paid:Math.max(0,parseFloat(paidInput.value)||0)}); };
+      var ren=row.querySelector('[data-eact="rename"]'); if(ren) ren.onclick=function(){ var d=S.extras.filter(function(x){return x.id===id;})[0]; askText('Rename', d.name, function(nm){ call('saveExtras',{id:id, name:nm}); }); };
+      var del=row.querySelector('[data-eact="del"]'); if(del) del.onclick=function(){ if(!requirePin())return; var d=S.extras.filter(function(x){return x.id===id;})[0]; confirmBox('Delete '+d.name+'?', function(){ call('deleteExtras',{pin:PIN, id:id}); }); };
+    });
+  }
+  function openAddExtras(){
+    askText('Add a person', '', {placeholder:'Name', okLabel:'Add'}, function(nm){
+      call('saveExtras',{name:nm, meals:{}, paid:0}, function(){ toast('Added'); });
+    });
+  }
+
+  // ---- treasurer unlock ----
+  function unlock(){
+    if(PIN){ PIN=null; render(); toast('Treasurer mode off'); return; }
+    askText('Enter treasurer PIN', '', {numeric:true, placeholder:'PIN', okLabel:'Unlock'}, function(p){
+      saving(true);
+      google.script.run.withSuccessHandler(function(st){ saving(false); PIN=p; S=st; render(); toast('Treasurer mode on'); })
+        .withFailureHandler(function(){ saving(false); toast('Wrong PIN'); })
+        .editPerson({pin:p, id:'__noop__'});
+    });
+  }
+  function requirePin(){ if(PIN) return true; toast('Unlock treasurer mode first (bottom of page)'); return false; }
+
+  // ---- misc ----
+  function copyAcc(){ copyText(S.config.account); }
+  function copySummary(){
+    var exp=S.people.reduce(function(a,p){return a+p.owed;},0);
+    var col=S.people.reduce(function(a,p){return a+p.paid;},0);
+    var paid=[],part=[],unp=[];
+    S.people.forEach(function(p){ var s=statusOf(p); if(s==='paid')paid.push(p.name); else if(s==='partial')part.push(p.name+' ('+money(remaining(p))+' left)'); else unp.push(p.name); });
+    var t=S.config.eventName+' payment update\n';
+    t+='Collected '+money(col)+' of '+money(exp)+'. Deadline '+fmtDate(S.config.deadlineDate)+'.\n';
+    t+='\nPaid ('+paid.length+'): '+(paid.join(', ')||'none yet');
+    if(part.length) t+='\n\nPartial ('+part.length+'): '+part.join(', ');
+    t+='\n\nStill to pay ('+unp.length+'): '+(unp.join(', ')||'all done');
+    t+='\n\nPay to '+S.config.payName+', '+S.config.bank+' '+S.config.account;
+    copyText(t);
+  }
+  function copyText(t){
+    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(function(){toast('Copied');},function(){fb();}); } else fb();
+    function fb(){ var ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy'); toast('Copied');}catch(e){prompt('Copy this:',t);} document.body.removeChild(ta); }
+  }
+  function openModal(html){ document.getElementById('sheet').innerHTML=html; document.getElementById('overlay').classList.add('show'); }
+  function closeModal(){ document.getElementById('overlay').classList.remove('show'); }
+  // clean in-app replacements for the browser's prompt/confirm popups
+  function askText(title, def, opts, onOk){
+    if(typeof opts==='function'){ onOk=opts; opts={}; }
+    opts = opts||{};
+    var h = '<h3>'+esc(title)+'</h3>';
+    h += '<div class="fld"><input id="askInput" '+(opts.numeric?'type="tel" inputmode="numeric"':'type="text"')+' value="'+esc(def||'')+'" placeholder="'+esc(opts.placeholder||'')+'"></div>';
+    h += '<div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn" id="askOk">'+esc(opts.okLabel||'OK')+'</button></div>';
+    openModal(h);
+    var input = document.getElementById('askInput');
+    input.focus();
+    function go(){ var v=(input.value||'').trim(); closeModal(); if(v) onOk(v); }
+    document.getElementById('askOk').onclick = go;
+    input.onkeydown = function(e){ if(e.key==='Enter') go(); };
+  }
+  function confirmBox(message, onYes){
+    var h = '<h3>'+esc(message)+'</h3>';
+    h += '<div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn" id="yesBtn" style="background:var(--red);">Delete</button></div>';
+    openModal(h);
+    document.getElementById('yesBtn').onclick = function(){ closeModal(); onYes(); };
+  }
+  document.getElementById('overlay').addEventListener('click', function(e){ if(e.target.id==='overlay') closeModal(); });
+  var toastT;
+  function toast(m){ var el=document.getElementById('toast'); el.textContent=m; el.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(function(){el.classList.remove('show');},2200); }
+</script>
+</body>
+</html>
